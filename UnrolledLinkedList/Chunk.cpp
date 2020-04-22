@@ -11,10 +11,11 @@ public:
 
 class Chunk {
 private:
-	unsigned int Items = 0;
 	Object* Values[chunkSize];
 
 public:
+	unsigned int Items = 0;
+
 	Chunk* Next = 0x0;
 	Chunk* Prev = 0x0;
 
@@ -51,7 +52,6 @@ public:
 	}
 
 	void RemoveAt(unsigned int Pos) {
-		delete Values[Pos];
 		Values[Pos] = NULL;
 		Items--;
 	}

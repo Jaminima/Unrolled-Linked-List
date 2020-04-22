@@ -2,7 +2,7 @@
 
 class List {
 private:
-	unsigned int Chunks = 0;
+	unsigned int Chunks = 1;
 
 	void AddChunk() {
 		Chunk * newChunk = new Chunk();
@@ -14,6 +14,13 @@ private:
 		Chunks++;
 	}
 
+	void DeleteChunk() {
+		Feet = Feet->Prev;
+		delete Feet->Next;
+		Feet->Next = 0x0;
+		Chunks--;
+	}
+
 public:
 	Chunk* Head = 0x0;
 	Chunk* Feet = 0x0;
@@ -23,8 +30,12 @@ public:
 		Feet->Add(Item);
 	}
 
+	void SetAt(unsigned int Chunk, unsigned int Pos, Object* Value) {
+		ChunkAt(Chunk)->SetAt(Pos, Value);
+	}
+
 	Object* ObjectAt(unsigned int Chunk, unsigned int Pos) {
-		ChunkAt(Chunk)->ObjectAt(Pos);
+		return ChunkAt(Chunk)->ObjectAt(Pos);
 	}
 
 	void RemoveAt(unsigned int Chunk, unsigned int Pos) {
@@ -70,7 +81,7 @@ public:
 		}
 		else {
 			C = Feet;
-			for (unsigned int i = Chunks-1; i >= Pos; i--) { C = C->Prev; }
+			for (unsigned int i = Chunks-1; i > Pos; i--) { C = C->Prev; }
 		}
 		return C;
 	}
@@ -79,6 +90,42 @@ public:
 		Chunk* newChunk = new Chunk();
 		Head = newChunk;
 		Feet = newChunk;
+	}
+
+	void Optimise() {
+		unsigned int nulls = 0;
+		Chunk* chunk = Head;
+		Object* Temp;
+
+		for (unsigned int C = 0, P = 0; C < Chunks;) {
+			Temp = ObjectAt(C, P);
+
+			chunk->SetAt(P, NULL);
+			chunk->Items--;
+
+			if (Temp == NULL) { nulls++; chunk->Items++; }
+			else if (nulls<=P) {
+				chunk->SetAt(P - nulls, Temp);
+				chunk->Items++;
+			}
+			else if (nulls+P<10) {
+				chunk->Prev->SetAt(chunkSize - nulls + P, Temp);
+				chunk->Prev->Items++;
+			}
+			else {
+				SetAt(C - ((P + nulls) / chunkSize), chunkSize - nulls + P, Temp);
+				ChunkAt(C - ((P + nulls) / chunkSize))->Items++;
+			}
+
+			P++;
+			if (P == chunkSize) {
+				C++;
+				P = 0;
+				chunk = ChunkAt(C);
+			}
+		}
+
+		while (chunk->IsEmpty()) DeleteChunk();
 	}
 };
 
@@ -98,4 +145,6 @@ int main()
 	L->RemoveAt(2, 0);
 	L->RemoveAt(2, 2);
 	L->RemoveAt(2, 4);
+
+	L->Optimise();
 }
